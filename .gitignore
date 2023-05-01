@@ -1,0 +1,5 @@
+backend/.env
+backend/playground.ipynb
+backend/__pycache__/
+backend/db/
+.vscode/
