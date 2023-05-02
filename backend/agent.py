@@ -73,7 +73,7 @@ class Agent(object):
                             try:
                                 print(json.dumps(result, indent=4))
 
-                                self.history.add("ai", result["speak"])
+                                # self.history.add("ai", result["speak"])
                             
                                 # Construct new task by result
                                 command_name = result["command_name"]

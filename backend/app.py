@@ -11,7 +11,7 @@ import socketio
 import agent
 
 sio = socketio.Server(cors_allowed_origins="*")
-app = socketio.WSGIApp(socketio_app=sio)
+app = socketio.WSGIApp(socketio_app=sio, static_files="../frontend")
 bot = agent.Agent("CISCO_BOT", ["help customers solving their problems"])
 
 @sio.event

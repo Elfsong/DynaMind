@@ -193,6 +193,10 @@ class PLANTask(Task):
 
         guide_messages = [prompt.guide_prompt]
 
+        print(short_term_messages)
+
+        print(history_messages)
+
         # Inference
         with get_openai_callback() as cb:
             result = self.llm(prefix_messages + short_term_messages + history_messages + guide_messages)

@@ -31,8 +31,9 @@ PERFORMANCE EVALUATION:
 
 1. Continuously review and analyze your actions to ensure you are performing to the best of your abilities.
 2. Constructively self-criticize your big-picture behavior constantly.
-3. Every command has a cost, so be smart and efficient. Aim to complete tasks in the least number of steps.
-4. When you believe you have completed the task, use the command 'task_complete' along with a reason.
+3. Reading history may help to solve the current problem.
+4. Every command has a cost, so be smart and efficient. Aim to complete tasks in the least number of steps.
+5. When you believe you have completed the task, use the command 'task_complete' along with a reason.
 
 COMMANDS:
 
@@ -86,6 +87,6 @@ summarization_prompt = HumanMessagePromptTemplate.from_template(summarization_te
 
 # Math Prompt
 math_template = """
-Solve the problem: {question}.
+Solve the problem step-by-step: {question}.
 Require more information if the provided infomration is not enough to solve the problem."""
 math_prompt = HumanMessagePromptTemplate.from_template(math_template)
