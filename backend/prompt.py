@@ -39,8 +39,9 @@ COMMANDS:
 1. Internet Search: "search", args: "query": "<search_query>"
 2. Browse: "browse", args: "url": "<url>", "type": "<html/pdf/unknown>", "question": "<what_you_want_to_find_on_website>"
 3. Plan: "plan", args: ""
-4. Task Complete: "task_complete", args: "reason": "<reason>", "summary": "<>"
-5. Standby: "standby", args: ""
+4. Math: "math", args: "question": "<question>"
+5. Task Complete: "task_complete", args: "reason": "<reason>", "summary": "<>"
+6. Standby: "standby", args: ""
 
 RESPONSE FORMAT:
 {
@@ -72,7 +73,7 @@ association_prompt = SystemMessagePromptTemplate.from_template(association_templ
 guide_prompt = SystemMessage(content="""
 RESPONSE REQUIREMENT:
 1. Ensure the response can be parsed by Python json.loads().
-2. Ensure each field has a value.
+2. Ensure each field(thought/reasoning/plan/criticism/command_name/command_args) has a value.
 3. Determine which next command to use, and respond using the json format specified above.""")
 
 
@@ -81,3 +82,10 @@ summarization_template = """{text}
 Using the above text, please answer the following question: {question}
 If the question cannot be answered using the text, please summarize the text."""
 summarization_prompt = HumanMessagePromptTemplate.from_template(summarization_template)
+
+
+# Math Prompt
+math_template = """
+Solve the problem: {question}.
+Require more information if the provided infomration is not enough to solve the problem."""
+math_prompt = HumanMessagePromptTemplate.from_template(math_template)

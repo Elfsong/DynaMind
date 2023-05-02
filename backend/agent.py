@@ -59,68 +59,77 @@ class Agent(object):
         return next_task
     
     def receive(self, sio, sid, data):
-        input = data["command"]
-        sio.emit('message', {'content': f"Copy that! Lemme think...", "style": "system"}, room=sid)
-        
-        if input and self.current_task:
-            if input == "y":
-                if self.current_task.task_type != task.TaskType.STANDBY:
-                    result = self.current_task.execute()
+        try:
+            input = data["command"]
+            sio.emit('message', {'content': f"Copy that! Lemme think...", "style": "system"}, room=sid)
+            
+            if input and self.current_task:
+                if input == "y":
+                    if self.current_task.task_type != task.TaskType.STANDBY:
+                        result = self.current_task.execute()
 
-                    # Write result into short-term memory
-                    if self.current_task.task_type == task.TaskType.PLAN:
-                        print(json.dumps(result, indent=4))
+                        # Write result into short-term memory
+                        if self.current_task.task_type == task.TaskType.PLAN:
+                            try:
+                                print(json.dumps(result, indent=4))
 
-                        self.history.add("ai", result["speak"])
-                    
-                        # Construct new task by result
-                        command_name = result["command_name"]
-                        command_args = result["command_args"]
+                                self.history.add("ai", result["speak"])
+                            
+                                # Construct new task by result
+                                command_name = result["command_name"]
+                                command_args = result["command_args"]
 
-                        # Display Thought
-                        sio.emit('message', {'content': f"💭 Thought: {result['thought']}", "style": "thought"}, room=sid)
-                        sio.emit('message', {'content': f"🔍 Reasoning: {result['reasoning']}", "style": "reasoning"}, room=sid)
-                        sio.emit('message', {'content': f"🗓️ Plan: {result['plan']}", "style": "plan"}, room=sid)
-                        sio.emit('message', {'content': f"👨🏼‍⚖️ Criticism: {result['criticism']}", "style": "criticism"}, room=sid)
-                        sio.emit('message', {'content': f"🗣️ Speak: {result['speak']}", "style": "speak"}, room=sid)
+                                # Display Thought
+                                sio.emit('message', {'content': f"💭 Thought: {result['thought']}", "style": "thought"}, room=sid)
+                                sio.emit('message', {'content': f"🔍 Reasoning: {result['reasoning']}", "style": "reasoning"}, room=sid)
+                                sio.emit('message', {'content': f"🗓️ Plan: {result['plan']}", "style": "plan"}, room=sid)
+                                sio.emit('message', {'content': f"👨🏼‍⚖️ Criticism: {result['criticism']}", "style": "criticism"}, room=sid)
+                                sio.emit('message', {'content': f"🗣️ Speak: {result['speak']}", "style": "speak"}, room=sid)
+                            except Exception as e:
+                                print(e)
+                                command_name = "standby"
 
-                        # Generate Next Task
-                        if command_name == "task_complete":
-                            next_task = task.CompleteTask("complete", command_args)
-                        elif command_name == "standby":
+                            # Generate Next Task
+                            if command_name == "task_complete":
+                                next_task = task.CompleteTask("complete", command_args)
+                            elif command_name == "search":
+                                next_task = task.SearchTask("search", command_args)
+                            elif command_name == "browse":
+                                next_task = task.BrowseTask("browse", command_args)
+                            elif command_name == "math":
+                                next_task = task.MathTask("math", command_args)
+                            elif command_name == "standby":
+                                next_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
+                            else:
+                                next_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."}) 
+                        elif self.current_task.task_type == task.TaskType.COMPLETE:
+                            self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
                             next_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
-                        elif command_name == "search":
-                            next_task = task.SearchTask("search", command_args)
-                        elif command_name == "browse":
-                            next_task = task.BrowseTask("browse", command_args)
+                            sio.emit('message', {'content': f"🗣️ Speak: {result['summary']}", "style": "speak"}, room=sid)
+                            self.history.add("ai", result["summary"])
                         else:
-                            next_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."}) 
-                    elif self.current_task.task_type == task.TaskType.COMPLETE:
-                        self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
-                        next_task = self.construct_plan_task()
-                        sio.emit('message', {'content': f"🗣️ Speak: {result['summary']}", "style": "speak"}, room=sid)
-                        self.history.add("ai", result["summary"])
-                    else:
-                        self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
-                        next_task = self.construct_plan_task()
-                        sio.emit('message', {'content': f"🗂️ Resource: {result}", "style": "resource"}, room=sid)
+                            self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
+                            next_task = self.construct_plan_task()
+                            sio.emit('message', {'content': f"🗂️ Resource: {result}", "style": "resource"}, room=sid)
 
-                    self.current_task = next_task
+                        self.current_task = next_task
+                    else:
+                        self.current_task = self.construct_plan_task()
+                elif input == "n":
+                    self.current_task = task.StandbyTask("withdraw", {"status": "Waiting for the user feedback."})
                 else:
+                    self.history.add("user", input)
+                    self.human_input = input
                     self.current_task = self.construct_plan_task()
-            elif input == "n":
-                self.current_task = task.StandbyTask("withdraw", {"status": "Waiting for the user feedback."})
             else:
-                self.history.add("user", input)
-                self.human_input = input
-                self.current_task = self.construct_plan_task()
-        else:
-            self.current_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
-        
-        sio.emit('message', {'content': f"Next Task: {self.current_task.task_type.value}", "style": "system"}, room=sid)
-        if self.current_task.task_type != task.TaskType.PLAN:
-            sio.emit('message', {'content': f"Args: {self.current_task.args}", "style": "system" }, room=sid)
-        sio.emit('message', {'content': f"[Y] to preceed ✅ / [N] to terminate 🛑 / Typing to feedback 💬", "style": "system"}, room=sid)
+                self.current_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
+            
+            sio.emit('message', {'content': f"Next Task: {self.current_task.task_type.value}", "style": "system"}, room=sid)
+            if self.current_task.task_type != task.TaskType.PLAN:
+                sio.emit('message', {'content': f"Args: {self.current_task.args}", "style": "system" }, room=sid)
+            sio.emit('message', {'content': f"[Y] to preceed ✅ / [N] to terminate 🛑 / Typing to feedback 💬", "style": "system"}, room=sid)
+        except Exception as e:
+            sio.emit('message', {'content': f"System Error: {e}. Could you retry?", "style": "system"}, room=sid)
 
 if __name__ ==  "__main__":
     agent = Agent("CISCO_BOT", ["help customers solving their problems"])

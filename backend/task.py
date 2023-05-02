@@ -22,6 +22,7 @@ class TaskType(Enum):
     BROWSE = "browse"
     MESSAGE = "message"
     SUMMARY = "summary"
+    MATH = "math"
     UNKNOWN = "unknown"
  
 class Task(object):
@@ -57,6 +58,25 @@ class CompleteTask(Task):
 
     def execute(self):
         return self.args
+    
+class MathTask(Task):
+    def __init__(self, name, args) -> None:
+        super().__init__(name, args)
+        self.task_type = TaskType.MATH
+        self.question = self.args["question"]
+        self.llm = self.smart_llm
+
+    def execute(self):
+        math_messages = prompt.math_prompt.format_messages(question=self.question)
+
+        # TODO(mingzhe): Token limitation
+
+        # Inference
+        with get_openai_callback() as cb:
+            result = self.llm(math_messages)
+            print(cb)
+
+        return result.content
 
 class SearchTask(Task):
     def __init__(self, name, args) -> None:
