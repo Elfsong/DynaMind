@@ -23,13 +23,14 @@ class Agent(object):
 
         # Current Task
         self.current_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
+        # self.current_task = task.BrowseTask("test",  {'url': 'https://ids.nus.edu.sg/people-researchers.html', 'type': 'html', 'question': 'List of researchers in NUS IDS'})
 
         # History
         self.history = memory.History()
 
         # Human Input
         self.human_input = ""
-    
+        
     def get_prefix_messages(self):
         self.time = utils.get_current_time()
         self.location = utils.get_current_location("Singapore")
@@ -56,30 +57,36 @@ class Agent(object):
             "short_term_memory": stm,
         })
         return next_task
-
-    def response(self, input):
-        if self.current_task:
+    
+    def receive(self, sio, sid, data):
+        input = data["command"]
+        sio.emit('message', {'content': f"Copy that! Lemme think...", "style": "system"}, room=sid)
+        
+        if input and self.current_task:
             if input == "y":
                 if self.current_task.task_type != task.TaskType.STANDBY:
                     result = self.current_task.execute()
 
                     # Write result into short-term memory
-                    if self.current_task.task_type != task.TaskType.PLAN:
-                        self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
-                        next_task = self.construct_plan_task()
-                    else:
+                    if self.current_task.task_type == task.TaskType.PLAN:
+                        print(json.dumps(result, indent=4))
+
                         self.history.add("ai", result["speak"])
                     
                         # Construct new task by result
                         command_name = result["command_name"]
                         command_args = result["command_args"]
 
-                        # TODO(mingzhe): display thought
-                        print(json.dumps(result, indent=4))
+                        # Display Thought
+                        sio.emit('message', {'content': f"💭 Thought: {result['thought']}", "style": "thought"}, room=sid)
+                        sio.emit('message', {'content': f"🔍 Reasoning: {result['reasoning']}", "style": "reasoning"}, room=sid)
+                        sio.emit('message', {'content': f"🗓️ Plan: {result['plan']}", "style": "plan"}, room=sid)
+                        sio.emit('message', {'content': f"👨🏼‍⚖️ Criticism: {result['criticism']}", "style": "criticism"}, room=sid)
+                        sio.emit('message', {'content': f"🗣️ Speak: {result['speak']}", "style": "speak"}, room=sid)
 
                         # Generate Next Task
                         if command_name == "task_complete":
-                            next_task = task.CompleteTask("welcome", {"status": "Waiting for the user feedback."})
+                            next_task = task.CompleteTask("complete", command_args)
                         elif command_name == "standby":
                             next_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
                         elif command_name == "search":
@@ -88,6 +95,15 @@ class Agent(object):
                             next_task = task.BrowseTask("browse", command_args)
                         else:
                             next_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."}) 
+                    elif self.current_task.task_type == task.TaskType.COMPLETE:
+                        self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
+                        next_task = self.construct_plan_task()
+                        sio.emit('message', {'content': f"🗣️ Speak: {result['summary']}", "style": "speak"}, room=sid)
+                        self.history.add("ai", result["summary"])
+                    else:
+                        self.short_term_memory.add(key={"command": self.current_task.task_type.value, "args": self.current_task.args}, value=result)
+                        next_task = self.construct_plan_task()
+                        sio.emit('message', {'content': f"🗂️ Resource: {result}", "style": "resource"}, room=sid)
 
                     self.current_task = next_task
                 else:
@@ -100,18 +116,21 @@ class Agent(object):
                 self.current_task = self.construct_plan_task()
         else:
             self.current_task = task.StandbyTask("welcome", {"status": "Waiting for the user feedback."})
-
+        
+        sio.emit('message', {'content': f"Next Task: {self.current_task.task_type.value}", "style": "system"}, room=sid)
+        if self.current_task.task_type != task.TaskType.PLAN:
+            sio.emit('message', {'content': f"Args: {self.current_task.args}", "style": "system" }, room=sid)
+        sio.emit('message', {'content': f"[Y] to preceed ✅ / [N] to terminate 🛑 / Typing to feedback 💬", "style": "system"}, room=sid)
 
 if __name__ ==  "__main__":
     agent = Agent("CISCO_BOT", ["help customers solving their problems"])
-    # agent.response("Do you familiar with Cisco 5000 Series Routers?")
 
     while True:
         print(f"Command: {agent.current_task.task_type.value}")
         if agent.current_task.task_type != task.TaskType.PLAN:
             print(agent.current_task.args)
 
-        print("[y] to preceed / [n] to terminate / typing to feedback")
-        agent.response(input("INPUT:"))
+        print("[Y] to preceed 🟢 / [N] to terminate 🔴 / typing to feedback 💬")
+        agent.receive(input("Command > ").lower().strip())
 
 

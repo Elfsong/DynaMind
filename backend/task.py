@@ -5,6 +5,7 @@
 import json
 import utils
 import prompt
+from tqdm import tqdm
 from enum import Enum
 from langchain.chat_models import ChatOpenAI
 from langchain.callbacks import get_openai_callback
@@ -55,7 +56,7 @@ class CompleteTask(Task):
         self.task_type = TaskType.COMPLETE
 
     def execute(self):
-        return StandbyTask("welcome", {"status": "Waiting for the user feedback."})
+        return self.args
 
 class SearchTask(Task):
     def __init__(self, name, args) -> None:
@@ -85,7 +86,7 @@ class BrowseTask(Task):
             texts = text_splitter.split_text(raw_text)
         
             summarization_list = list()
-            for text in texts:
+            for text in tqdm(texts):
                 summarization = SummaryTask("summary", {
                     "text": text,
                     "question": self.question,
@@ -176,27 +177,4 @@ class PLANTask(Task):
         with get_openai_callback() as cb:
             result = self.llm(prefix_messages + short_term_messages + history_messages + guide_messages)
             print(cb)
-
         return utils.response_parse(result.content)
-    
-    # def post_process(self, response_json):
-    #     command_name = response_json["command"]["name"]
-    #     command_args = response_json["command"]["args"]
-
-    #     # TODO(mingzhe): display thought
-    #     print(json.dumps(response_json, indent=4))
-
-    #     # Generate Next Task
-    #     if command_name == "task_complete":
-    #         next_task = StandbyTask("welcome", {"status": "Waiting for the user feedback."})
-    #     elif command_name == "standby":
-    #         next_task = StandbyTask("welcome", {"status": "Still waiting for the user feedback."})
-    #     elif command_name == "search":
-    #         next_task = SearchTask("search", command_args)
-    #     elif command_name == "browse_website":
-    #         next_task = BrowseTask("browse_website", command_args)
-    #     else:
-    #         next_task = None
-
-    #     return next_task
-
