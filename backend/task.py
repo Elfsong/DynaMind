@@ -34,8 +34,8 @@ class Task(object):
         # LLM settings
         self.smart_llm = ChatOpenAI(model_name = "gpt-4", temperature=0)
         self.fast_llm = ChatOpenAI(model_name = "gpt-3.5-turbo", temperature=0)
-        self.smart_llm_token_limit = 4000
-        self.fast_llm_token_limit = 8000
+        self.smart_llm_token_limit = 8000
+        self.fast_llm_token_limit = 4000
     
     def execute(self):
         raise NotImplementedError("Don't call the base interface.")
@@ -101,17 +101,17 @@ class BrowseTask(Task):
         self.llm = self.fast_llm if self.fast_model else self.smart_llm
     
     def recursive_summary(self, raw_text):
-        while self.llm.get_num_tokens(raw_text) > 2000:
-            text_splitter = TokenTextSplitter(chunk_size=2000, chunk_overlap=500)
+        while self.llm.get_num_tokens(raw_text) > 800:
+            text_splitter = TokenTextSplitter(chunk_size=800, chunk_overlap=100)
             texts = text_splitter.split_text(raw_text)
         
             summarization_list = list()
-            for text in tqdm(texts):
+            for text in tqdm(texts, desc="Recursive Summary"):
                 summarization = SummaryTask("summary", {
                     "text": text,
                     "question": self.question,
                     "fast_model": self.fast_model
-                })
+                }).execute()
                 summarization_list += [summarization]
             raw_text = " ".join(summarization_list)
 
@@ -140,13 +140,8 @@ class SummaryTask(Task):
     def execute(self):
         summary_messages = prompt.summarization_prompt.format_messages(text=self.text, question=self.question)
 
-        # TODO(mingzhe): Token limitation
-
         # Inference
-        with get_openai_callback() as cb:
-            result = self.llm(summary_messages)
-            print(cb)
-
+        result = self.llm(summary_messages)
         return result.content
         
 class PLANTask(Task):
@@ -159,18 +154,27 @@ class PLANTask(Task):
         self.token_quota = self.fast_llm_token_limit if self.args["fast_model"] else self.smart_llm_token_limit
     
     def execute(self):
-        # Prefix Prompt
+        # Prefix Prompt Construction
         prefix_messages = self.args["prefix_messages"]
         self.token_quota -= self.llm.get_num_tokens_from_messages(prefix_messages)
 
-        # Retrieve memory
-        # TODO(mingzhe): follow short term memory
-        long_term_association = self.args["long_term_memory"]
-        
-        # Short-term Memory
+        # History retrieval
+        history_list = self.args["history"]
+        history_messages = list()
+        history_quota = min(1000, self.token_quota - 4000)
+        while history_list:
+            history_messages += [history_list.pop()]
+            history_messages_count = self.llm.get_num_tokens_from_messages(history_messages)
+            if history_quota - history_messages_count < 0:
+                history_messages.pop()
+                print("History section too long, truncated...")
+                break
+        history_messages.reverse()
+
+        # Short-term memory retrieval
         short_term_list = self.args["short_term_memory"]
         short_term_messages = list()
-        short_term_quota = 2000
+        short_term_quota = min(2000, self.token_quota - 3000)
         while short_term_list:
             short_term_messages += [short_term_list.pop()]
             short_term_messages_count = self.llm.get_num_tokens_from_messages(short_term_messages)
@@ -178,27 +182,18 @@ class PLANTask(Task):
                 short_term_messages.pop()
                 break
 
-        # History
-        history_list = self.args["history"]
-        history_messages = list()
-        history_quota = min(1200, self.token_quota - 2000)
-
-        while history_list:
-            history_messages += [history_list.pop()]
-            history_messages_count = self.llm.get_num_tokens_from_messages(history_messages)
-            if history_quota - history_messages_count < 0:
-                history_messages.pop()
+        # Long-term memory retrieval
+        long_term_list = self.args["long_term_memory"]
+        long_term_messages = list()
+        long_term_quota = min(2000, self.token_quota - 1000)
+        while long_term_list:
+            long_term_messages += [long_term_list.pop()]
+            long_term_messages_count = self.llm.get_num_tokens_from_messages(long_term_messages)
+            if long_term_quota - long_term_messages_count < 0:
+                long_term_messages.pop()
                 break
-        history_messages.reverse()
-
-        guide_messages = [prompt.guide_prompt]
-
-        print(short_term_messages)
-
-        print(history_messages)
 
         # Inference
-        with get_openai_callback() as cb:
-            result = self.llm(prefix_messages + short_term_messages + history_messages + guide_messages)
-            print(cb)
+        result = self.llm(prefix_messages + short_term_messages + long_term_messages + history_messages)
+        
         return utils.response_parse(result.content)

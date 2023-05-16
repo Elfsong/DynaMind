@@ -48,7 +48,7 @@ class History(Memory):
     def add(self, key, value):
         if key == "user":
             self.index.add_user_message(value)
-        elif key == "ai":
+        elif key == "assistant":
             self.index.add_ai_message(value)
         else:
             raise KeyError("Unknown History Key.")
@@ -63,7 +63,7 @@ class ShortTermMemory(Memory):
         self.embeddings_model = OpenAIEmbeddings()
         self.embedding_size = 1536
         self.decay_rate = 0.05
-        self.top_k = 5
+        self.top_k = 10
         self.vectorstore = FAISS(self.embeddings_model.embed_query, faiss.IndexFlatL2(self.embedding_size), InMemoryDocstore({}), {})
         self.retriever = TimeWeightedVectorStoreRetriever(vectorstore=self.vectorstore, decay_rate=self.decay_rate, k=self.top_k)
     
@@ -77,8 +77,7 @@ class ShortTermMemory(Memory):
         return self.retriever.get_relevant_documents(key)[:top_k]
     
     def convert(self, docs):
-        return [AIMessage(content=doc.page_content) for doc in docs]            
-
+        return [SystemMessage(content=doc.page_content) for doc in docs]            
 
 class LongTermMemory(Memory):
     def __init__(self) -> None:
@@ -88,9 +87,9 @@ class LongTermMemory(Memory):
         self.index = Chroma(embedding_function=self.embedding_function, persist_directory='db')
         self.threshold = 0.75
 
-        # Create an empty collection and persist it
-        [self.index.add_texts([""]) for _ in range(5)]
-        self.index.persist()
+        # # Create an empty collection and persist it
+        # [self.index.add_texts([""]) for _ in range(5)]
+        # self.index.persist()
 
     def add(self, keys, values):
         key_embeddings = self.embedding_function.embed_documents(keys)
@@ -107,5 +106,4 @@ class LongTermMemory(Memory):
         return [doc for doc in docs if doc[0] and doc[1] > self.threshold]
     
     def convert(self, docs):
-        # return [SystemMessage(content=doc.page_content) for doc in docs]
-        return None
+        return [SystemMessage(content=doc.page_content) for doc in docs]

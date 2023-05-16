@@ -24,7 +24,8 @@ def disconnect(sid):
 
 @sio.event
 def receive(sid, data):
-    bot.receive(sio, sid, data)
+    print("=" * 50)
+    bot.new_receive(sio, sid, data)
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('', 12345)), app)
+    eventlet.wsgi.server(eventlet.listen(('', 12346)), app)
