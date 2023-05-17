@@ -6,7 +6,6 @@ import utils
 import task
 import prompt
 import memory
-import json
 
 class Agent(object):
     def __init__(self, name, personalities) -> None:
@@ -19,6 +18,9 @@ class Agent(object):
         # History
         self.history = memory.History()
 
+        # Action History
+        self.action_history = memory.History()
+
         # Memory
         self.short_term_memory = memory.ShortTermMemory()
         self.long_term_memory = memory.LongTermMemory()
@@ -28,70 +30,101 @@ class Agent(object):
 
         # Human Input
         self.human_input = ""
+
+        # Credit
+        self.credit = 0
         
     def get_prefix_messages(self):
         self.time = utils.get_current_time()
         self.location = utils.get_current_location("Singapore")
         return prompt.prefix_prompt.format_prompt(agent_name=self.name, agent_objective="/".join(self.personalities), time=self.time, location=self.location).to_messages()
     
-    def short2long(self):
-        pass
+    def short2long(self, query, response, lt_candidates):
+        # Save <query, answer> pair
+        self.long_term_memory.add([utils.get_history_str(self.history.query(top_k=5))], [response])
 
-    def new_receive(self, sio=None, sid=None, data=None):
-        try:
-            # Get user_input
-            query = data["user_input"]
+        for doc in self.short_term_memory.query(query, top_k=5):
+            doc_uuid = doc.metadata["uuid"]
+            doc_key = doc.metadata["key"]
+            doc_content = doc.page_content
 
-            # Add user_input into history
-            self.history.add("user", query)
+            if doc_uuid in lt_candidates:
+                # TODO(mingzhe): Check if adding into long-term memory
 
-            while True:
-                planner = task.PLANTask("planner", {
-                    "fast_model": False, 
-                    "prefix_messages": self.get_prefix_messages(), 
-                    "history": self.history.query(top_k=5),
-                    "long_term_memory": self.long_term_memory.convert(self.long_term_memory.query(query, top_k=5)),
-                    "short_term_memory": self.short_term_memory.convert(self.short_term_memory.query(query, top_k=5)),
-                })
+                # Similarity Check
+                if self.long_term_memory.query(doc_key, top_k=5, threshold=0.1):
+                    print("Alreay has the item. Skipped.")
+                else:
+                    self.long_term_memory.add([doc_key], [doc_content])
 
-                next_task = planner.execute()
+    def receive(self, sio=None, sid=None, data=None):
+        # Get user_input
+        query = data["user_input"]
+
+        # Add user_input into history
+        self.history.add("user", query)
+
+        # Long-term memory candidates (UUID)
+        lt_candidates = set()
+
+        self.credit = 5
+        self.action_history.clear()
+
+        while self.credit:
+            self.credit -= 1
+
+            planner = task.PLANTask("planner", {
+                "fast_model": False, 
+                "prefix_messages": self.get_prefix_messages(), 
+                "query": query,
+                "history": self.history.query(top_k=5),
+                "action_history": self.action_history.query(top_k=5),
+                "long_term_memory": self.long_term_memory.convert(self.long_term_memory.query(query, top_k=5, threshold=0.3)),
+                "short_term_memory": self.short_term_memory.convert(self.short_term_memory.query(query, top_k=5)),
+            })
+            sio.emit('message', {'content': f"🔮 Thinking...", "style": "system"}, room=sid)
+            next_task, short_term_uuids = planner.execute()
+            lt_candidates.update(short_term_uuids)
+
+            try:
                 task_name = next_task["command_name"]
                 task_args = next_task["command_args"]
+            except Exception as e:
+                self.history.add("assistant", str(next_task))
+                sio.emit('message', {'content': f"🗣️ {next_task}", "style": "speak"}, room=sid)
+                break
 
-                if task_name == "complete":
-                    response = task_args['response']
-                    sio.emit('message', {'content': f"🗣️ {response}", "style": "speak"}, room=sid)
-                    self.history.add("assistant", response)
-                    self.short2long()
-                    break
-                else:
-                    if task_name == "search":
-                        search_task = task.SearchTask("search", task_args)
-                        result = search_task.execute()
-                        self.short_term_memory.add(key=f"search: {task_args['query']}", value=result)
-                    elif task_name == "browse":
-                        browse_task = task.BrowseTask("browse", task_args)
-                        result = browse_task.execute()
-                        self.short_term_memory.add(key=f"browse: {task_args['url']}-{task_args['question']}", value=result)
-                    elif task_name == "math":
-                        math_task = task.MathTask("math", task_args)
-                        result = math_task.execute()
-                        self.short_term_memory.add(key=f"math: {task_args['question']}", value=result)
-                    else:
-                        pass
+            if task_name == "response":
+                response = task_args['response']
+                sio.emit('message', {'content': f"🗣️ {response}", "style": "speak"}, room=sid)
+                self.history.add("assistant", response)
+                sio.emit('message', {'content': f"🧠 Moving short-term memory to long-term memory...", "style": "system"}, room=sid)
+                self.short2long(query, response, lt_candidates)
+                break
+            else:
+                sio.emit('message', {'content': f"Action: {task_name}, Args: {task_args}", "style": "task"}, room=sid)
                 
-        except Exception as e:
-            print(f"Error: {e}")
-            sio.emit('message', {'content': f"System Error: {e}. It's weird, could you retry?", "style": "system"}, room=sid)
+                if task_name == "search":
+                    search_task = task.SearchTask("search", task_args)
+                    result = search_task.execute()
+                    self.short_term_memory.add(key=f"search: {task_args['query']}", value=result)
+                elif task_name == "browse":
+                    browse_task = task.BrowseTask("browse", task_args)
+                    result = browse_task.execute()
+                    self.short_term_memory.add(key=f"browse: {task_args['url']}-{task_args['question']}", value=result)
+                elif task_name == "math":
+                    math_task = task.MathTask("math", task_args)
+                    result = math_task.execute()
+                    self.short_term_memory.add(key=f"math: {task_args['question']}", value=result)
+                else:
+                    pass
 
+                self.action_history.add("assistant", f"command_name: {task_name} command_args: {task_args} has been tried. Don't use this same command again.")
+                
 if __name__ ==  "__main__":
     agent = Agent("CISCO_BOT", ["help customers solving their problems"])
 
     while True:
-        print(f"Command: {agent.current_task.task_type.value}")
-        if agent.current_task.task_type != task.TaskType.PLAN:
-            print(agent.current_task.args)
-
-        agent.new_receive(data = {"user_input": input("Command > ").lower().strip()})
+        agent.receive(data = {"user_input": input("Command > ").lower().strip()})
 
 

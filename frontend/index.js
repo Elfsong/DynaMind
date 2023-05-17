@@ -1,13 +1,13 @@
 // Author: Du Mingzhe (mingzhe@nus.edu.sg)
 // Date: 2023-04-29
 
-const socket = io("http://localhost:12346");
+const socket = io("http://0.0.0.0:12345");
 
 const submit_button = document.getElementById("submit-button");
 const submit_input  = document.getElementById("submit-input");
 const message_container = document.getElementById("message-container");
 
-// var credit = 5;
+var last_system_msg = null;
 
 function add_message(data) {
     const m_style = data.style
@@ -19,27 +19,23 @@ function add_message(data) {
     }
 
     const message_el = document.createElement("div");
+
     if (m_style == "human") {
         message_el.classList.add("alert", "alert-primary");
-    } else if (m_style == "thought") {
-        message_el.classList.add("alert", "alert-secondary");
-    } else if (m_style == "reasoning") {
-        message_el.classList.add("alert", "alert-secondary");
-    } else if (m_style == "plan") {
-        message_el.classList.add("alert", "alert-secondary");
-    } else if (m_style == "criticism") {
-        message_el.classList.add("alert", "alert-secondary");
     } else if (m_style == "speak") {
         message_el.classList.add("alert", "alert-success");
+        message_container.removeChild(last_system_msg);
     } else if (m_style == "system") {
         message_el.classList.add("alert", "alert-light");
-    } else if (m_style == "resource") {
-        message_el.classList.add("alert", "alert-secondary");
+        last_system_msg = message_div;
+    } else if (m_style == "task") {
+        message_el.classList.add("alert", "alert-light");
+        message_container.removeChild(last_system_msg);
     } else {
         message_el.classList.add("alert", "alert-secondary");
     }
 
-    message_el.classList.add("alert", "alert-primary");
+    // message_el.classList.add("alert", "alert-primary");
     message_el.setAttribute('role', 'alert');
     message_el.textContent = data.content;
     

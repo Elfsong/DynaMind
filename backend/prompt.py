@@ -26,17 +26,18 @@ Your decisions must always be made independently. Play to your strengths as an L
 CONSTRAINTS:
 
 1. Exclusively use the listed commands.
-2. You should only respond in JSON format as described below.
-3. Always contain "command_name" and "command_args" in the JSON.
+2. Responses should include url references of external sources to ensure reliability.
+3. You should only respond in JSON format as described below, instead of the plain text.
+4. Always contain "command_name" and "command_args" in the JSON response.
 
 COMMANDS:
 
 1. Internet Search: "search", args: "query": "<search_query>"
 2. Browse: "browse", args: "url": "<url>", "type": "<html/pdf/unknown>", "question": "<what_you_want_to_find_on_website>"
 3. Math: "math", args: "question": "<math_question>"
-4. Complete: "complete", args: "response": "<response_to_human>"
+4. Response: "response", args: "response": "<response_with_reference_link>"
 
-RESPONSE FORMAT:
+RESPONSE JSON FORMAT:
 {
     "command_name": "command_name",
     "command_args":{
@@ -67,5 +68,5 @@ summarization_prompt = HumanMessagePromptTemplate.from_template(summarization_te
 # Math Prompt
 math_template = """
 Solve the problem step-by-step: {question}.
-Require more information if the provided infomration is not enough to solve the problem."""
+Require more information if the provided information is not enough to solve the problem."""
 math_prompt = HumanMessagePromptTemplate.from_template(math_template)
