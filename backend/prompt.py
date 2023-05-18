@@ -43,7 +43,7 @@ RESPONSE JSON FORMAT:
     "command_args":{
         "arg_name": "arg_value"
     }
-}
+}   
 """
 principle_message = SystemMessage(content=principle_template)
 
