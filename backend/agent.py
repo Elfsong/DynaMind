@@ -33,11 +33,6 @@ class Agent(object):
 
         # Credit
         self.credit = 0
-        
-    def get_prefix_messages(self):
-        self.time = utils.get_current_time()
-        self.location = utils.get_current_location("Singapore")
-        return prompt.prefix_prompt.format_prompt(agent_name=self.name, agent_objective="/".join(self.personalities), time=self.time, location=self.location).to_messages()
     
     def short2long(self, query, response, lt_candidates):
         # Save <query, answer> pair
@@ -57,9 +52,8 @@ class Agent(object):
                 else:
                     self.long_term_memory.add([doc_key], [doc_content])
 
-    def receive(self, sio=None, sid=None, data=None):
-        # Get user_input
-        query = data["user_input"]
+    def receive(self, query, socket_config):
+        sio, sid = socket_config
 
         # Add user_input into history
         self.history.add("user", query)
@@ -75,14 +69,14 @@ class Agent(object):
 
             planner = task.PLANTask("planner", {
                 "fast_model": False, 
-                "prefix_messages": self.get_prefix_messages(), 
+                "prefix_messages": prompt.get_prefix_messages(self.name, self.personalities), 
                 "query": query,
                 "history": self.history.query(top_k=5),
                 "action_history": self.action_history.query(top_k=5),
                 "long_term_memory": self.long_term_memory.convert(self.long_term_memory.query(query, top_k=5, threshold=0.3)),
-                "short_term_memory": self.short_term_memory.convert(self.short_term_memory.query(query, top_k=5)),
+                "short_term_memory": self.short_term_memory.convert_with_meta(self.short_term_memory.query(query, top_k=5)),
             })
-            sio.emit('message', {'content': f"🔮 Thinking...", "style": "system"}, room=sid)
+            sio.emit('message', {'content': f"🔮 Thinking: {query}", "style": "system"}, room=sid)
             next_task, short_term_uuids = planner.execute()
             lt_candidates.update(short_term_uuids)
 
@@ -120,7 +114,64 @@ class Agent(object):
                     pass
 
                 self.action_history.add("assistant", f"command_name: {task_name} command_args: {task_args} has been tried. Don't use this same command again.")
-                
+
+    def execute(self, query):
+        # Add user_input into history
+        self.history.add("user", query)
+
+        # Long-term memory candidates (UUID)
+        lt_candidates = set()
+
+        self.credit = 5
+        self.action_history.clear()
+
+        while self.credit:
+            self.credit -= 1
+
+            planner = task.PLANTask("planner", {
+                "fast_model": False, 
+                "prefix_messages": prompt.get_prefix_messages(self.name, self.personalities), 
+                "query": query,
+                "history": self.history.query(top_k=5),
+                "action_history": self.action_history.query(top_k=5),
+                "long_term_memory": self.long_term_memory.convert(self.long_term_memory.query(query, top_k=5, threshold=0.3)),
+                "short_term_memory": self.short_term_memory.convert_with_meta(self.short_term_memory.query(query, top_k=5)),
+            })
+    
+            next_task, short_term_uuids = planner.execute()
+            lt_candidates.update(short_term_uuids)
+
+            try:
+                task_name = next_task["command_name"]
+                task_args = next_task["command_args"]
+            except Exception as e:
+                self.history.add("assistant", str(next_task))
+                return str(next_task)
+
+            if task_name == "response":
+                response = task_args['response']
+                self.history.add("assistant", response)
+                self.short2long(query, response, lt_candidates)
+                return response
+            else:                
+                if task_name == "search":
+                    search_task = task.SearchTask("search", task_args)
+                    result = search_task.execute()
+                    self.short_term_memory.add(key=f"search: {task_args['query']}", value=result)
+                elif task_name == "browse":
+                    browse_task = task.BrowseTask("browse", task_args)
+                    result = browse_task.execute()
+                    self.short_term_memory.add(key=f"browse: {task_args['url']}-{task_args['question']}", value=result)
+                elif task_name == "math":
+                    math_task = task.MathTask("math", task_args)
+                    result = math_task.execute()
+                    self.short_term_memory.add(key=f"math: {task_args['question']}", value=result)
+                else:
+                    pass
+
+                self.action_history.add("assistant", f"command_name: {task_name} command_args: {task_args} has been tried. Don't use this same command again.")
+        return "Sorry, I can't respend to it."     
+
 if __name__ ==  "__main__":
     agent = Agent("CISCO_BOT", ["help customers solving their problems"])
 

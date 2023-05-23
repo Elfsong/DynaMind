@@ -58,5 +58,21 @@ def get_history_str(msg_list):
         history += [f"{msg.type}: {msg.content}"]
     return str(history)
 
+def kuibu_validation(raw_response):
+    try:
+        step_list = response_parse(raw_response)
+        for i in step_list:
+            print(f"step_description: {i['step_description']}, step_result_needed: {i['step_result_needed']}")
+        return step_list
+    except Exception as e:
+        print(e)
+        return None
+    
+def send_message(message, style="system", socket_config=None):
+    if socket_config:
+        sio, sid = socket_config
+        sio.emit('message', {'content': message, "style": style}, room=sid)
+    print(f"[{style}] {message}")
+
 # Load Environment Variables in advance
 load_envs(get_envs())

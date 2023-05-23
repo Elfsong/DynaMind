@@ -79,6 +79,9 @@ class ShortTermMemory(Memory):
         return self.retriever.get_relevant_documents(key)[:top_k]
     
     def convert(self, docs):
+        return [SystemMessage(content=doc.page_content) for doc in docs]    
+    
+    def convert_with_meta(self, docs):
         return [(SystemMessage(content=doc.page_content), doc.metadata) for doc in docs]            
 
 class LongTermMemory(Memory):

@@ -237,9 +237,12 @@ class PLANTask(Task):
         short_term_list = self.args["short_term_memory"]
         short_term_messages = list()
         short_term_uuids = list()
-        short_term_quota = min(4000, self.token_quota - 2000)
+        short_term_quota = min(5000, self.token_quota - 2000)
         while short_term_list:
             doc_message, doc_metadata = short_term_list.pop()
+
+            # Summarize resource
+            doc_message.content = utils.recursive_summary(llm=self.fast_llm, raw_text=doc_message.content, question=self.args["query"], text_length=800, chunk_size=1000)
 
             short_term_messages += [doc_message]
             short_term_uuids += [doc_metadata["uuid"]]
@@ -257,7 +260,7 @@ class PLANTask(Task):
         while long_term_list:
             doc_message = long_term_list.pop()
 
-             # Summarize resource
+            # Summarize resource
             doc_message.content = utils.recursive_summary(llm=self.fast_llm, raw_text=doc_message.content, question=self.args["query"], text_length=500, chunk_size=1000)
 
             long_term_messages += [doc_message]
