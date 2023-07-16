@@ -8,6 +8,7 @@ import prompt
 import requests
 from tqdm import tqdm
 from enum import Enum
+from termcolor import cprint
 from langchain.chat_models import ChatOpenAI
 from langchain.utilities import BingSearchAPIWrapper
 from langchain.document_loaders import PlaywrightURLLoader
@@ -222,16 +223,16 @@ class PLANTask(Task):
         history_messages.reverse()
         self.token_quota -= self.llm.get_num_tokens_from_messages(history_messages)
 
-        # Action History Retrieval
-        action_history_list = self.args["action_history"]
-        action_history_messages = list()
-        action_history_quota = min(500, self.token_quota - 3500)
-        while action_history_list:
-            action_history_messages += [action_history_list.pop()]
-            action_history_messages_count = self.llm.get_num_tokens_from_messages(action_history_messages)
-            if action_history_quota - action_history_messages_count < 0:
-                action_history_messages.pop()
-                break
+        # # Action History Retrieval
+        # action_history_list = self.args["action_history"]
+        # action_history_messages = list()
+        # action_history_quota = min(500, self.token_quota - 3500)
+        # while action_history_list:
+        #     action_history_messages += [action_history_list.pop()]
+        #     action_history_messages_count = self.llm.get_num_tokens_from_messages(action_history_messages)
+        #     if action_history_quota - action_history_messages_count < 0:
+        #         action_history_messages.pop()
+        #         break
 
         # Short-term memory retrieval
         short_term_list = self.args["short_term_memory"]
@@ -242,13 +243,14 @@ class PLANTask(Task):
             doc_message, doc_metadata = short_term_list.pop()
 
             # Summarize resource
-            doc_message.content = utils.recursive_summary(llm=self.fast_llm, raw_text=doc_message.content, question=self.args["query"], text_length=800, chunk_size=1000)
+            doc_message.content = utils.recursive_summary(llm=self.fast_llm, raw_text=doc_message.content, question=self.args["query"], text_length=1200, chunk_size=800)
 
             short_term_messages += [doc_message]
             short_term_uuids += [doc_metadata["uuid"]]
             short_term_messages_count = self.llm.get_num_tokens_from_messages(short_term_messages)
-            if short_term_quota - short_term_messages_count< 0:
-                short_term_messages.pop()
+            if short_term_quota - short_term_messages_count < 0:
+                poped_message = short_term_messages.pop()
+                cprint(poped_message, 'red')
                 short_term_uuids.pop()
                 break
         self.token_quota -= self.llm.get_num_tokens_from_messages(short_term_messages)
@@ -270,11 +272,13 @@ class PLANTask(Task):
                 break
         self.token_quota -= self.llm.get_num_tokens_from_messages(long_term_messages)
 
-        # Inference
-        print("short_term_messages", short_term_messages)
-        print("long_term_messages", long_term_messages)
-        print("action_history_messages", [SystemMessage(content=msg.content) for msg in action_history_messages])
+        # Final guidance
+        guidance_message = SystemMessage(content="Using the context knowledge to response.")
 
-        result = self.llm(prefix_messages + short_term_messages + long_term_messages + action_history_messages + history_messages)
-        print(result)
+        # Inference
+        cprint(f"short_term_messages: {short_term_messages}", color="red")
+        cprint(f"long_term_messages: {long_term_messages}", color="blue")
+
+        result = self.llm(prefix_messages + short_term_messages + long_term_messages + history_messages + [guidance_message])
+        cprint(result, color="green")
         return utils.response_parse(result.content), short_term_uuids

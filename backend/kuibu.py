@@ -84,9 +84,9 @@ class KuiBu():
             else:
                 if socket_config:
                     utils.send_message(f"[KuiBu] Looking for: {step['step_description']}", "system", socket_config)
-                    result = self.agent.receive(f"{step['step_description']}, make sure the result includes {step['step_result_needed']}", socket_config)
+                    result = self.agent.receive(f"{step['step_description']}", socket_config)
                 else:
-                    result = self.agent.execute(f"{step['step_description']}, make sure the result includes {step['step_result_needed']}")
+                    result = self.agent.execute(f"{step['step_description']}")
             
             step_result += [{
                 "step_description": step["step_description"],

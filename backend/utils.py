@@ -30,7 +30,6 @@ def get_current_location(location) -> str:
 def response_parse(response_raw):
     try:
         response_json = json.loads(response_raw)
-        print(response_json)
     except Exception as e:
         print(f"OpenAI Response Parsing Error: {e} RAW response: {response_raw}")
         return response_raw

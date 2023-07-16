@@ -61,3 +61,8 @@ submit_input.addEventListener("keyup", function(event) {
     event.preventDefault();
     if (event.key === 'Enter') {submit_button.click();}
 });
+
+$(".dropdown-menu li a").click(function(){
+    $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
+    $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
+});

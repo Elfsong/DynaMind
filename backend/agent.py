@@ -67,16 +67,23 @@ class Agent(object):
         while self.credit:
             self.credit -= 1
 
+            long_term_memory = self.long_term_memory.convert(self.long_term_memory.query(query, top_k=5, threshold=0.3))
+            short_term_memory = self.short_term_memory.convert_with_meta(self.short_term_memory.query(query, top_k=5))
+
             planner = task.PLANTask("planner", {
                 "fast_model": False, 
                 "prefix_messages": prompt.get_prefix_messages(self.name, self.personalities), 
                 "query": query,
                 "history": self.history.query(top_k=5),
                 "action_history": self.action_history.query(top_k=5),
-                "long_term_memory": self.long_term_memory.convert(self.long_term_memory.query(query, top_k=5, threshold=0.3)),
-                "short_term_memory": self.short_term_memory.convert_with_meta(self.short_term_memory.query(query, top_k=5)),
+                "long_term_memory": long_term_memory,
+                "short_term_memory": short_term_memory,
             })
-            sio.emit('message', {'content': f"🔮 Thinking: {query}", "style": "system"}, room=sid)
+
+            if long_term_memory:
+                sio.emit('message', {'content': f"🧠 Retrieving knowledge from the long-term memory.", "style": "system"}, room=sid)
+
+            sio.emit('message', {'content': f"🔮 Thinking...", "style": "system"}, room=sid)
             next_task, short_term_uuids = planner.execute()
             lt_candidates.update(short_term_uuids)
 
@@ -162,10 +169,6 @@ class Agent(object):
                     browse_task = task.BrowseTask("browse", task_args)
                     result = browse_task.execute()
                     self.short_term_memory.add(key=f"browse: {task_args['url']}-{task_args['question']}", value=result)
-                elif task_name == "math":
-                    math_task = task.MathTask("math", task_args)
-                    result = math_task.execute()
-                    self.short_term_memory.add(key=f"math: {task_args['question']}", value=result)
                 else:
                     pass
 

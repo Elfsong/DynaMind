@@ -6,7 +6,9 @@ import json
 import uuid
 import uuid
 import faiss
+import utils
 from enum import Enum
+from termcolor import cprint
 from datetime import datetime, timedelta
 from langchain.docstore import InMemoryDocstore
 from langchain.memory import ChatMessageHistory
@@ -75,14 +77,14 @@ class ShortTermMemory(Memory):
         content = f"{key_str} -> {value_str}"
         self.retriever.add_documents([Document(page_content=content, metadata={"last_accessed_at": datetime.now(), "uuid": str(uuid.uuid4()), "key": key_str})])
 
-    def query(self, key, top_k):
-        return self.retriever.get_relevant_documents(key)[:top_k]
+    def query(self, key, top_k, threshold=1):
+        return self.retriever.get_relevant_documents(key, threshold)[:top_k]
     
     def convert(self, docs):
         return [SystemMessage(content=doc.page_content) for doc in docs]    
     
     def convert_with_meta(self, docs):
-        return [(SystemMessage(content=doc.page_content), doc.metadata) for doc in docs]            
+        return [(AIMessage(content=doc.page_content), doc.metadata) for doc in docs]            
 
 class LongTermMemory(Memory):
     def __init__(self) -> None:
@@ -100,6 +102,10 @@ class LongTermMemory(Memory):
         ids = [str(uuid.uuid1()) for _ in keys]
         self.index._collection.add(embeddings=embeddings, documents=values, ids=ids)
         self.index.persist()
+        return ids
+
+    def delete(self, ids):
+        self.index._collection.delete(ids=ids)
     
     def query(self, key, top_k, threshold):
         docs = self.index.similarity_search_with_score(query=key, k=top_k)
@@ -107,3 +113,30 @@ class LongTermMemory(Memory):
     
     def convert(self, docs):
         return [SystemMessage(content=doc.page_content) for doc in docs]
+    
+if __name__ == "__main__":
+    long_term_memory = LongTermMemory()
+
+    print("\n")
+    cprint("==================================================", color="blue")
+    cprint("Welcome to DynaMind Memory Management System(DMMS)", color="blue")
+    cprint("==================================================", color="blue")
+    print("\n")
+
+    while True:
+        command = input("[add / update / delete / exit]:")
+
+        if command == "add":
+            # Add knowledge
+            knowledge_key = input("Knowledge Key: ")
+            knowledge_value = input("Knowledge Value: ")
+            ids = long_term_memory.add(keys=[knowledge_key], values=[knowledge_value + "[Use this knowledge to respond directly, and don't call search and browse furthermore.]"])
+            cprint(f"Added -> {ids}", color="green")
+        elif command == "update":
+            # Delete knowledge
+            knowledge_uuid = input("Knowledge uuid: ")
+            ids = long_term_memory.delete(ids=[knowledge_uuid])
+            cprint(f"Deleted -> {knowledge_uuid}", color="green")
+        else:
+            break
+        
