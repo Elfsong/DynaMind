@@ -6,8 +6,17 @@ const socket = io("http://0.0.0.0:12345");
 const submit_button = document.getElementById("submit-button");
 const submit_input  = document.getElementById("submit-input");
 const message_container = document.getElementById("message-container");
+const token_modal = new bootstrap.Modal(document.getElementById("token-modal"), {keyboard: true});
+const token_input = document.getElementById("token-input");
+const token_save_button = document.getElementById("token-save-btn");
 
+var token = null;
 var last_system_msg = null;
+
+token_save_button.onclick = function() {
+    token = token_input.value;
+    token_modal.hide();
+}
 
 function add_message(data) {
     const m_style = data.style
@@ -50,7 +59,11 @@ socket.on("message", function(data) {
 });
 
 submit_button.onclick = function() {
-    socket.timeout(5000).emit("receive", {"user_input": submit_input.value}, (err) => {
+    if (token == null) {
+        token_modal.show();
+        return;
+    }
+    socket.timeout(5000).emit("receive", {"user_input": submit_input.value, "token": token}, (err) => {
         if (err) { console.log("the server did not acknowledge the event in the given delay"); }
     });
     add_message({"content": submit_input.value, "style": "human"});

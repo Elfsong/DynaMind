@@ -32,7 +32,10 @@ def disconnect(sid):
 @sio.event
 def receive(sid, data):
     print("=" * 50)
-    bot.receive(data["user_input"], socket_config=(sio, sid))
+    if data["token"] == "yyids":
+        bot.receive(data["user_input"], socket_config=(sio, sid))
+    else:
+        print(f"illegal request: {data}")
 
 
 # @sio.event

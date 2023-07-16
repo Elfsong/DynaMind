@@ -9,13 +9,40 @@
 
     <body>
         <div class="container">
-            <h1>DynaMind</h1>
+            <!-- Title Container -->
+            <div class="row  my-2">
+                <div class="col-2"><h1>DynaMind</h1></div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#token-modal">Token</button>
+                </div>
+            </div>
+            
+            <!-- Modal -->
+            <div class="modal fade" id="token-modal" tabindex="-1" aria-labelledby="TokenModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="TokenModalLabel">Token</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1">Token</span>
+                                <input type="text" class="form-control" id="token-input" placeholder="sk-xxxxxxxxxx">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="token-save-btn">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Message Container -->
             <div id="message-container" class="container col-lg-12 px-0" style="max-height: 80vh; overflow-y: scroll;"></div>
             
             <!-- Text Container -->
-
             <div class="row">
                 <div class="col-11">
                     <div class="container fixed-bottom my-5">
