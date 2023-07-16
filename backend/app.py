@@ -7,6 +7,8 @@ if sys.platform == "darwin":
     selectors.DefaultSelector = selectors.PollSelector
 
 import eventlet
+eventlet.monkey_patch()
+
 import socketio
 import agent
 import kuibu
@@ -49,4 +51,15 @@ def receive(sid, data):
 
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('', 12345)), app)
+    # HTTP
+    # eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 8443)), app)
+
+    # HTTPS
+    eventlet.wsgi.server(
+        eventlet.wrap_ssl(
+            eventlet.listen(('0.0.0.0', 8443)),
+            certfile='/etc/letsencrypt/live/dynamind.one/fullchain.pem',
+            keyfile='/etc/letsencrypt/live/dynamind.one/privkey.pem',
+            server_side=True), 
+        app
+    )

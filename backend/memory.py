@@ -78,7 +78,7 @@ class ShortTermMemory(Memory):
         self.retriever.add_documents([Document(page_content=content, metadata={"last_accessed_at": datetime.now(), "uuid": str(uuid.uuid4()), "key": key_str})])
 
     def query(self, key, top_k, threshold=1):
-        return self.retriever.get_relevant_documents(key, threshold)[:top_k]
+        return self.retriever.get_relevant_documents(key)[:top_k]
     
     def convert(self, docs):
         return [SystemMessage(content=doc.page_content) for doc in docs]    

@@ -3,3 +3,5 @@ backend/playground.ipynb
 backend/__pycache__/
 backend/db/
 .vscode/
+backend/dynamind.log
+backend/pid

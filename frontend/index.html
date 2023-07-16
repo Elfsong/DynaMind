@@ -10,11 +10,11 @@
     <body>
         <div class="container">
             <!-- Title Container -->
-            <div class="row  my-2">
-                <div class="col-2"><h1>DynaMind</h1></div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#token-modal">Token</button>
-                </div>
+            <div class="row my-2">
+                <div class="col-sm-4"><h1>DynaMind</h1></div>
+                <!-- <div class="col-sm-2"> -->
+                <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#token-modal">Token</button> -->
+                <!-- </div> -->
             </div>
             
             <!-- Modal -->
@@ -47,7 +47,7 @@
                 <div class="col-11">
                     <div class="container fixed-bottom my-5">
                         <div class="row">
-                            <div class="col-1">
+                            <div class="col-lg-1 col-sm-2">
                                 <div class="dropdown" id="model-selection">
                                     <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Models</button>
                                     <ul class="dropdown-menu">
@@ -57,7 +57,7 @@
                                     </ul>
                                 </div>
                             </div>
-                            <div class="col-11">
+                            <div class="col-lg-11 col-sm-10">
                                 <div class="input-group">
                                     <input type="text" class="form-control" placeholder="query" aria-label="Feedback" aria-describedby="submit-button" id="submit-input">
                                     <button class="btn btn-success" type="button" id="submit-button">Submit</button>

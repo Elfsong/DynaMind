@@ -48,7 +48,7 @@ RESPONSE JSON FORMAT:
 principle_message = SystemMessage(content=principle_template)
 
 # Meta info Prompt
-meta_info_template = """The current time is {time}. User location is {location}."""
+meta_info_template = """The current UTC time is {time}. User location is {location}."""
 meta_info_prompt = SystemMessagePromptTemplate.from_template(meta_info_template)
 
 # Gate Prompt

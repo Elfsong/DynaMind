@@ -1,7 +1,7 @@
 // Author: Du Mingzhe (mingzhe@nus.edu.sg)
 // Date: 2023-04-29
 
-const socket = io("http://0.0.0.0:12345");
+const socket = io("https://dynamind.one:8443");
 
 const submit_button = document.getElementById("submit-button");
 const submit_input  = document.getElementById("submit-input");
