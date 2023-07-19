@@ -83,7 +83,7 @@ class Agent(object):
             if long_term_memory:
                 sio.emit('message', {'content': f"🧠 Retrieving knowledge from the long-term memory.", "style": "system"}, room=sid)
 
-            sio.emit('message', {'content': f"🔮 Thinking...", "style": "system"}, room=sid)
+            sio.emit('message', {'content': f"🪄 Processing...", "style": "system"}, room=sid)
             next_task, short_term_uuids = planner.execute()
             lt_candidates.update(short_term_uuids)
 

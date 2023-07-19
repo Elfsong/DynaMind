@@ -7,16 +7,17 @@ if sys.platform == "darwin":
     selectors.DefaultSelector = selectors.PollSelector
 
 import eventlet
-eventlet.monkey_patch()
+socketio = eventlet.import_patched("socketio")
 
-import socketio
+# import socketio
 import agent
 import kuibu
 
 sio = socketio.Server(cors_allowed_origins="*")
 app = socketio.WSGIApp(socketio_app=sio, static_files={
     "/": "../frontend/index.html",
-    "/index.js": "../frontend/index.js"
+    "/cover": "../frontend/cover.html",
+    "/index.js": "../frontend/index.js",
 })
 
 bot = agent.Agent("DYNAMIND_BOT", ["help customers solving their problems"])
@@ -58,8 +59,10 @@ if __name__ == '__main__':
     eventlet.wsgi.server(
         eventlet.wrap_ssl(
             eventlet.listen(('0.0.0.0', 8443)),
-            certfile='/etc/letsencrypt/live/dynamind.one/fullchain.pem',
-            keyfile='/etc/letsencrypt/live/dynamind.one/privkey.pem',
+            # certfile='/etc/letsencrypt/live/dynamind.one/fullchain.pem',
+            # keyfile='/etc/letsencrypt/live/dynamind.one/privkey.pem',
+            certfile='./fullchain.pem',
+            keyfile='./privkey.pem',
             server_side=True), 
         app
     )

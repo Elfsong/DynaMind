@@ -167,7 +167,8 @@ class BrowseTask(Task):
 
     def execute(self):
         if self.file_type == "html":
-            loader = PlaywrightURLLoader(urls=[self.file_path], remove_selectors=["header", "footer"])
+            loader = PlaywrightURLLoader(urls=[self.file_path], remove_selectors=["header", "footer"], continue_on_failure=False)
+
         raw_data = loader.load()
 
         if raw_data:

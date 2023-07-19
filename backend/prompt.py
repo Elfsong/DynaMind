@@ -30,7 +30,7 @@ CONSTRAINTS:
 2. Responses should include url references of external sources to ensure reliability.
 3. You should only respond in JSON format as described below, instead of the plain text.
 4. Always contain "command_name" and "command_args" in the JSON response.
-5. Don't call 'browse' repeatly if you see the 'browse' result exists in the context.
+5. Don't call same 'search' and 'browse' repeatly if you see the 'search' and 'browse' result exists in the context.
 
 COMMANDS:
 1. Internet Search: "search", args: "query": "<search_query>"
