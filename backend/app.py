@@ -1,6 +1,8 @@
 # coding: utf-8
 # Author: Du Mingzhe (mingzhe@nus.edu.sg)
 # Date: 2023-04-29
+
+# For Mac M1 (See it for more info: https://www.elfsong.cn/2023/07/18/eventlet-with-playwright/)
 import sys
 if sys.platform == "darwin":
     import selectors
@@ -9,7 +11,7 @@ if sys.platform == "darwin":
 import eventlet
 socketio = eventlet.import_patched("socketio")
 
-# import socketio
+import utils
 import agent
 import kuibu
 
@@ -24,7 +26,6 @@ app = socketio.WSGIApp(socketio_app=sio, static_files={
 bot = agent.Agent("DYNAMIND_BOT", ["help customers solving their problems"])
 # bot = kuibu.KuiBu("DYNAMIND_BOT", ["help customers solving their problems"])
 
-
 @sio.event
 def connect(sid, environ):
     print('connect ', sid)
@@ -36,7 +37,7 @@ def disconnect(sid):
 @sio.event
 def receive(sid, data):
     print("=" * 50)
-    if data["token"] == "yyids":
+    if data["token"] == utils.get_envs()["SYSTEM_TOKEN"]:
         bot.receive(data["user_input"], socket_config=(sio, sid))
     else:
         print(f"illegal request: {data}")

@@ -7,3 +7,4 @@ backend/dynamind.log
 backend/pid
 backend/fullchain.pem
 backend/privkey.pem
+dynamind.log
