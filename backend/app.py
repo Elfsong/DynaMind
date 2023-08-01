@@ -17,6 +17,7 @@ sio = socketio.Server(cors_allowed_origins="*")
 app = socketio.WSGIApp(socketio_app=sio, static_files={
     "/": "../frontend/index.html",
     "/cover": "../frontend/cover.html",
+    "/img.jpeg": "../frontend/img-1.jpeg",
     "/index.js": "../frontend/index.js",
 })
 
