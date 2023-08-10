@@ -11,6 +11,7 @@ Authors:
 
 Demo Website:
 - [www.dynamind.one](https://dynamind.one:8443/cover)
+- System Token is YYIDS
 
 Screencast Video:
 - Youtube: https://youtu.be/s7vkjg69Q48
