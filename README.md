@@ -16,6 +16,5 @@ Demo Website:
 Screencast Video:
 - Youtube: https://youtu.be/s7vkjg69Q48
 - Vimeo: https://vimeo.com/850444664
-  
 
-To remember the sleepless night of April 29th.
+Should you have any problem with this system, please feel free to contact mingzhe001@e.ntu.edu.sg. Thank you:)
