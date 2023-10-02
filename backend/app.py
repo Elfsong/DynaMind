@@ -40,6 +40,7 @@ def receive(sid, data):
     if data["token"] == utils.get_envs()["SYSTEM_TOKEN"]:
         bot.receive(data["user_input"], socket_config=(sio, sid))
     else:
+        sio.emit('message', {'content': f"The door hasn't moved at all, did you enter the wrong token?", "style": "system"}, room=sid)
         print(f"illegal request: {data}")
 
 
