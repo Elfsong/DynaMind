@@ -1,8 +1,7 @@
 # DynaMind
 In this section, we will delve into the architecture and workflow of DynaMind. As illustrated in the following figure, the system is primarily composed of three main components: *Inference Engine*, *Memory Manager*, and *Operators*. In a nutshell, the intellectual core, *Inference Engine* retrieves the knowledge required for decision-making from *Memory Manager* based on contexts and then generates subsequent instructions, which will be executed by *Operators*. 
 
-![The system overview of DynaMind.](emnlp2023-latex/img/DynaMind_overview.pdf)
-
+![The system overview of DynaMind.](https://github.com/Elfsong/DynaMind/blob/main/Appendix/DynaMind_overview.png)
 
 ## Inference Engine
 *Inference Engine* is powered by one or more LLMs which possess exceptional natural language reasoning capabilities. By integrating contextual information into carefully crafted prompt templates, DynaMind empowers these LLMs to produce structured instructions readily interpretable by *Operators*. Formally, *Inference Engine* can be formalized as follows:
@@ -13,7 +12,7 @@ Here, `IE` stands for *Inference Engine*, `O_in` denotes the running operator, a
 
 For instance, let's consider the query: "*The 1995 Tooheys 1000 driver who has second-to-last in the Tooheys Top 10 was born where?*". The first item in the operator queue will be ("Coordinate", {"query": "*The 1995 Tooheys 1000 driver who has second-to-last in the Tooheys Top 10 was born where?*"}). The desired output should resemble the case shown in the following figure.
 
-![The pipeline of example "*The 1995 Tooheys 1000 driver who has second-to-last in the Tooheys Top 10 was born where?*".](emnlp2023-latex/img/DynaMind_pipeline.pdf)
+![The pipeline of example "*The 1995 Tooheys 1000 driver who has second-to-last in the Tooheys Top 10 was born where?*".](https://github.com/Elfsong/DynaMind/blob/main/Appendix/DynaMind_pipeline.png)
 
 In light of differences in model parameters and training data, the capabilities of LLMs can differ significantly. Therefore, different LLMs can be employed for various tasks during the inference process. For example, while relatively small-scale LLMs may suffice for text summarization, large-scale LLMs are required for logical reasoning. Rather than relying on a single model, carefully selecting the appropriate model for each task not only enhances inference speeds but also improves overall performance. Currently, DynaMind supports the following LLMs: [OpenAI GPT-3.5 and GPT-4](https://openai.com/blog/openai-api), [Llama series models](https://huggingface.co/huggyllama/llama-30b), and [Falcon series models](https://huggingface.co/tiiuae/falcon-40b).
 
