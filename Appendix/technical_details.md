@@ -33,23 +33,7 @@ The knowledge stored in long-term memory may expire as time progresses. For inst
 
 Inspired by the Multi-Armed Bandit (MAB) algorithm, we abstract this issue as an exploration-exploitation problem [[6,7]](#6,#7). During the cold start period, *Memory Manager* retrieves $ K_t $ knowledge pieces. At this stage, the model lacks prior knowledge about the credibility associated with each knowledge piece $ k $. To figure out the most reliable knowledge for the given context $ c $, we assume a linear relationship between the credibility and the context. Consequently, the problem is transformed into a MAB estimation task, wherein we employ contextual features $ v_{t,k} $ of combining both $ k $ and $ c $ to estimate the credibility and its confidence interval. Subsequently, we choose the knowledge piece with the highest upper limit in its confidence interval $ p_{t,k} $. This approach emphasizes exploration when the confidence interval for $ k $ is wide, indicating fewer selections and increased uncertainty, representing the risky component of the algorithm. Conversely, if the confidence interval for $ k $ is narrow, implying an increased certainty regarding their credibility, the algorithm tends to favor knowledge pieces with higher means, reflecting the conservative and cautious side of the algorithm. 
 
-```python
-def knowledge_metabolism(alpha):
-    for t in range(1, T + 1):
-        v_tk = ["contextual features for each k in K_t"]  # placeholder
-        for k in K_t:
-            if k is new:
-                A_k = I_dxd
-                b_k = 0_d1
-            else:
-                theta_k = inv(A_k) @ b_k
-                p_tk = theta_k.T @ v_tk[k] + alpha * sqrt((v_tk[k].T @ inv(A_k) @ v_tk[k]))
-        
-        k_o = argmax(p_tk)  # choose arm with highest upper limit
-        r_t = "observe a real-valued payoff"  # placeholder
-        A_ko = A_ko + v_tk[k_o] @ v_tk[k_o].T
-        b_ko = b_ko + r_t * v_tk[k_o]
-```
+![knowledge_metabolism.](https://github.com/Elfsong/DynaMind/blob/main/Appendix/algo.png)
 
 ## Operators
 DynaMind provides a set of atomic operators that harness the power of an LLM with well-designed prompt templates. By permuting these essential operators, DynaMind is able to break down intricate problems into smaller, manageable sub-problems recursively, enabling step-by-step resolution. Moreover, the operators incorporate integrated functionalities such as invoking search engines and browsing websites. Below is a table showing the definition of the built-in operators. For specific operator formats and illustrative examples, please refer to Appendix Table with a reference link to [Appendix Table](#tab:operators_details).
