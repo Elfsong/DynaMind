@@ -7,6 +7,7 @@ const submit_button = document.getElementById("submit-button");
 const submit_input  = document.getElementById("submit-input");
 const message_container = document.getElementById("message-container");
 const token_modal = new bootstrap.Modal(document.getElementById("token-modal"), {keyboard: true});
+const homepage_modal = new bootstrap.Modal(document.getElementById("homepage-modal"), {keyboard: true});
 const token_input = document.getElementById("token-input");
 const token_save_button = document.getElementById("token-save-btn");
 
@@ -79,3 +80,5 @@ $(".dropdown-menu li a").click(function(){
     $(this).parents(".dropdown").find('.btn').html($(this).text() + ' <span class="caret"></span>');
     $(this).parents(".dropdown").find('.btn').val($(this).data('value'));
 });
+
+homepage_modal.show();
