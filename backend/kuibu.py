@@ -18,7 +18,7 @@ from langchain.schema import (
 class KuiBu():
     def __init__(self, name, personalities):
         # LLM settings
-        self.smart_llm = ChatOpenAI(model_name = "gpt-4", temperature=0)
+        self.smart_llm = ChatOpenAI(model_name = "gpt-4o", temperature=0)
         self.fast_llm = ChatOpenAI(model_name = "gpt-3.5-turbo", temperature=0)
         self.smart_llm_token_limit = 8000
         self.fast_llm_token_limit = 4000

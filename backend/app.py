@@ -56,16 +56,16 @@ def receive(sid, data):
 
 if __name__ == '__main__':
     # HTTP
-    # eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 8443)), app)
+    eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 8443)), app)
 
     # HTTPS
-    eventlet.wsgi.server(
-        eventlet.wrap_ssl(
-            eventlet.listen(('0.0.0.0', 8443)),
-            # certfile='/etc/letsencrypt/live/dynamind.one/fullchain.pem',
-            # keyfile='/etc/letsencrypt/live/dynamind.one/privkey.pem',
-            certfile='./fullchain.pem',
-            keyfile='./privkey.pem',
-            server_side=True), 
-        app
-    )
+    #eventlet.wsgi.server(
+    #    eventlet.wrap_ssl(
+    #        eventlet.listen(('0.0.0.0', 8443)),
+    #        # certfile='/etc/letsencrypt/live/dynamind.one/fullchain.pem',
+    #        # keyfile='/etc/letsencrypt/live/dynamind.one/privkey.pem',
+    #        certfile='./fullchain.pem',
+    #        keyfile='./privkey.pem',
+    #        server_side=True), 
+    #    app
+    #)

@@ -10,6 +10,7 @@ Authors:
 
 Demo Website:
 - [www.dynamind.one](https://dynamind.one:8443/cover)
+- Domain Expired, please use the following url instead: https://34.142.201.79:8443/cover.
 - System Token is **YYIDS**
 
 Screencast Video:
