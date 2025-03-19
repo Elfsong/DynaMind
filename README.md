@@ -23,3 +23,22 @@ Technical and Experimental Details:
 
 
 Should you have any problem with this system, please feel free to contact mingzhe001@e.ntu.edu.sg. Thank you:)
+
+```
+@inproceedings{du2024static,
+  title={From static to dynamic: knowledge metabolism for large language models},
+  author={Du, Mingzhe and Luu, Anh Tuan and Ji, Bin and Ng, See-Kiong},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={38},
+  number={21},
+  pages={23784--23786},
+  year={2024}
+}
+
+@article{du2023static,
+  title={From static to dynamic: A continual learning framework for large language models},
+  author={Du, Mingzhe and Luu, Anh Tuan and Ji, Bin and Ng, See-kiong},
+  journal={arXiv preprint arXiv:2310.14248},
+  year={2023}
+}
+```
